@@ -20,8 +20,9 @@ ACCESS_TOKEN_URL_TPL = "https://graph.facebook.com/oauth/access_token?client_id=
   + "&code="
   
 API = {
-    "profile" : "https://graph.facebook.com/me?access_token=%s",
-    "places" : "https://graph.facebook.com/search?type=place&center=%(lat)s,%(lon)s&distance=%(distance)d&access_token=%(access_token)s"
+    "base"      : "https://graph.facebook.com/%s",
+    "profile"   : "https://graph.facebook.com/me?access_token=%s",
+    "places"    : "https://graph.facebook.com/search?type=place&center=%(lat)s,%(lon)s&distance=%(distance)d&access_token=%(access_token)s"
 }
 
 connection = pymongo.Connection()
@@ -102,17 +103,35 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
             
     def on_fetch_places(self, response):
         places = json.loads(response.body)
+        # Add additional metadata we've stored locally
         self.write(json.dumps(places))
         self.finish()
         
+class LocationHandler(tornado.web.RequestHandler):
     
+    @tornado.web.asynchronous
+    def get(self, location_id):
+        user_id = self.get_secure_cookie("user_id")
+        if not user_id:
+            # Should probably throw up an error here
+            pass
+        else:
+            url = API["base"] % location_id
+            client = httpclient.AsyncHTTPClient()
+            client.fetch(url, self.on_fetch_location)
+            
+    def on_fetch_location(self, response):
+        location = json.loads(response.body)
+        self.render("templates/location.html", location=location)        
+        self.finish()
 
 
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/login", LoginHandler),
     (r"/callback", OnLoginHandler),
-    (r"/nearby", NearbyLocationsHandler)
+    (r"/nearby", NearbyLocationsHandler),
+    (r"/location/([0-9]+)", LocationHandler)
 ], cookie_secret=config.COOKIE_SECRET,
    static_path=os.path.join(os.path.dirname(__file__), "static"),
    debug=True)
