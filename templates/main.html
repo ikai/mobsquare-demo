@@ -10,17 +10,31 @@
         */
         main.getLocation = function(callback) {
             var wrappedCallback = function(position) {
-                console.log("HEREEE")
                 main._onGetLocation(position, callback)
             } 
             navigator.geolocation.getCurrentPosition(wrappedCallback);
         }
         
+        /**
+            Uses the lat/long provided by geolocation API to fetch
+            the nearby places (Facebook API) along with any additional
+            annotations.
+        */
         main.loadNearbyLocations = function() {
             main.getLocation(function(lat, lon) {
                 console.log(lat)
                 console.log(lon);
+                main.lat = lat;
+                main.lon = lon;
+                $.getJSON("/nearby?lat=" + lat + "&lon=" + lon, main.onLoadNearbyLocations)
             });
+        }
+        
+        /**
+            Callback for 
+        */
+        main.onLoadNearbyLocations = function(data) {
+            console.log(data);
         }
         
         /**
@@ -34,6 +48,10 @@
         
         $(function() {
             main.loadNearbyLocations(); 
+            
+            $("#loader").click(function(e){
+               main.loadNearbyLocations(); 
+            });
         });
     </script>
 </head>
@@ -43,4 +61,6 @@
     User ID: {{ user_id }}
     
     <a href="#" id="loader">Click me to load nearby locations</a>
+    <ul id="locations">
+    </ul>
 </body>

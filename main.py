@@ -101,7 +101,7 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
             
     def on_fetch_places(self, response):
         places = json.loads(response.body)
-        print places
+        self.write(json.dumps(places))
         self.finish()
         
     
