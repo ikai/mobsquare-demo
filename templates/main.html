@@ -1,3 +1,46 @@
-<h1>Welcome to MobSquare!</h1>
+<html>
+<head>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+    <script>
+        var main = {};
+        /*
+            Gets the location of the user. Access a callback(lat, long) to be invoked
+            when we have the information.
+            @param {function} callback(lat, long) to be invoked when information is available
+        */
+        main.getLocation = function(callback) {
+            var wrappedCallback = function(position) {
+                console.log("HEREEE")
+                main._onGetLocation(position, callback)
+            } 
+            navigator.geolocation.getCurrentPosition(wrappedCallback);
+        }
+        
+        main.loadNearbyLocations = function() {
+            main.getLocation(function(lat, lon) {
+                console.log(lat)
+                console.log(lon);
+            });
+        }
+        
+        /**
+            Private callback that is wrapped when we get back our data.
+        */
+        main._onGetLocation = function(position, callback) {
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            callback(lat, lon);
+        }
+        
+        $(function() {
+            main.loadNearbyLocations(); 
+        });
+    </script>
+</head>
+<body>
+    <h1>Welcome to MobSquare!</h1>
 
-User ID: {{ user_id }}
+    User ID: {{ user_id }}
+    
+    <a href="#" id="loader">Click me to load nearby locations</a>
+</body>
