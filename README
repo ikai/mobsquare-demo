@@ -1,1 +1,10 @@
-1. Fill in config.py.template with your values and copy them to config.py
+Instance of MobSquare, a FourSquare clone with a Mafia theme (using Facebook's API). 
+
+Requirements:
+    - Registered Facebook application
+    - running MongoDB
+    - pymongo - http://api.mongodb.org/python/
+    - tornado web - http://www.tornadoweb.org/documentation
+
+1. Fill in config.py.template with your values and copy them to config.py. On your local machine, for the login to work, you will want to
+    set your "site url" to localhost:8888.
