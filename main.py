@@ -5,6 +5,7 @@ from tornado import httpclient
 import urllib
 import re
 import json
+import os
 
 import pymongo
 import bson
@@ -113,7 +114,8 @@ application = tornado.web.Application([
     (r"/callback", OnLoginHandler),
     (r"/nearby", NearbyLocationsHandler)
 ], cookie_secret=config.COOKIE_SECRET,
-    debug=True)
+   static_path=os.path.join(os.path.dirname(__file__), "static"),
+   debug=True)
 
 if __name__ == "__main__":
     application.listen(8888)
