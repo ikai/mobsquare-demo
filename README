@@ -8,3 +8,5 @@ Requirements:
 
 1. Fill in config.py.template with your values and copy them to config.py. On your local machine, for the login to work, you will want to
     set your "site url" to localhost:8888.
+    
+    Set your COOKIE_SECRET to some random value.

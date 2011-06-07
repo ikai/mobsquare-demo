@@ -21,7 +21,11 @@ db = connection.mobsq_db
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Hello, world %s" % config.FACEBOOK_APPLICATION_ID)
+        user_id = self.get_secure_cookie("user_id")
+        if not user_id:
+            pass
+        else:
+            self.render("templates/main.html", user_id=user_id)
         
 class LoginHandler(tornado.web.RequestHandler):
     def get(self):
@@ -30,42 +34,43 @@ class LoginHandler(tornado.web.RequestHandler):
 ACCESS_TOKEN_REGEX = re.compile("access_token=(.*)&expires=(.*)")
 FETCH_PROFILE_URL = "https://graph.facebook.com/me?access_token=%s"
 
-    
-
 class OnLoginHandler(tornado.web.RequestHandler):
+    @tornado.web.asynchronous    
     def get(self):
         # Store this somewhere
         code = self.get_argument("code")
         access_token_url = ACCESS_TOKEN_URL_TPL + code
-        client = httpclient.AsyncHTTPClient()
-        self.write("Code is: %s" % code)
-        self.write("Access token url: %s" % access_token_url)
-                
-        # Builds a callback for LoginHandler
-        def on_profile_fetch(response, access_token):
-            if response.error:        
-                print "Error:", response.error
-            else:
-                profile = json.loads(response.body)
-                profile["access_token"] = access_token
-                print "Writing profile: %s" % profile
-                p_id = db.profiles.insert(profile, safe=True)
-                print "Wrote profile with ID: %s" % p_id
-                
-        
-        def on_fetched_token(response):
-            if response.error:
-                print "Error:", response.error
-            else:
-                body = response.body
-                matches = ACCESS_TOKEN_REGEX.search(body)
-                if matches:
-                    access_token = matches.group(1)
-                    print "Access token: %s" % access_token
-                    # lambda is effectively a function factory for us
-                    client.fetch(FETCH_PROFILE_URL % access_token, lambda response: on_profile_fetch(response, access_token))        
-        client.fetch(access_token_url, on_fetched_token)
+        client = httpclient.AsyncHTTPClient()                        
+        client.fetch(access_token_url, self.on_fetched_token)
         # tornado.ioloop.IOLoop.instance().start()
+        
+    def on_fetched_token(self, response):
+        if response.error:
+            print "Error:", response.error
+        else:
+            body = response.body
+            matches = ACCESS_TOKEN_REGEX.search(body)
+            if matches:
+                access_token = matches.group(1)
+                print "Access token: %s" % access_token
+                client = httpclient.AsyncHTTPClient()                        
+                # lambda is effectively a function factory for us
+                client.fetch(FETCH_PROFILE_URL % access_token, lambda response: self.on_profile_fetch(response, access_token))      
+                
+    def on_profile_fetch(self, response, access_token):
+        if response.error:        
+            print "Error:", response.error
+        else:
+            profile = json.loads(response.body)
+            profile["access_token"] = access_token
+            print "Writing profile: %s" % profile
+            profile_id = db.profiles.insert(profile, safe=True)
+            print "Wrote profile with ID: %s" % profile_id
+            self.set_secure_cookie("user_id", str(profile_id))
+            self.write("Cookie set.")
+            self.finish()
+  
+
     
 
 
@@ -73,7 +78,8 @@ application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/login", LoginHandler),
     (r"/callback", OnLoginHandler)
-], debug=True)
+], cookie_secret=config.COOKIE_SECRET,
+    debug=True)
 
 if __name__ == "__main__":
     application.listen(8888)
