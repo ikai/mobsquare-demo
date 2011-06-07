@@ -7,6 +7,8 @@ import re
 import json
 
 import pymongo
+import bson
+
 import config
 
 CALLBACK_URL = urllib.quote(config.REDIRECT_URL + "/callback")
@@ -16,8 +18,16 @@ ACCESS_TOKEN_URL_TPL = "https://graph.facebook.com/oauth/access_token?client_id=
   + "&client_secret=" + config.FACEBOOK_APPLICATION_SECRET \
   + "&code="
   
+API = {
+    "profile" : "https://graph.facebook.com/me?access_token=%s",
+    "places" : "https://graph.facebook.com/search?type=place&center=%(lat)s,%(lon)s&distance=%(distance)d&access_token=%(access_token)s"
+}
+
 connection = pymongo.Connection()
 db = connection.mobsq_db
+
+def get_user(user_id):
+    return db.profiles.find_one({"_id" : bson.objectid.ObjectId(user_id)})
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -32,8 +42,6 @@ class LoginHandler(tornado.web.RequestHandler):
         self.redirect(LOGIN_URL)
         
 ACCESS_TOKEN_REGEX = re.compile("access_token=(.*)&expires=(.*)")
-FETCH_PROFILE_URL = "https://graph.facebook.com/me?access_token=%s"
-
 class OnLoginHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous    
     def get(self):
@@ -55,7 +63,7 @@ class OnLoginHandler(tornado.web.RequestHandler):
                 print "Access token: %s" % access_token
                 client = httpclient.AsyncHTTPClient()                        
                 # lambda is effectively a function factory for us
-                client.fetch(FETCH_PROFILE_URL % access_token, lambda response: self.on_profile_fetch(response, access_token))      
+                client.fetch(API["profile"] % access_token, lambda response: self.on_profile_fetch(response, access_token))      
                 
     def on_profile_fetch(self, response, access_token):
         if response.error:        
@@ -70,14 +78,40 @@ class OnLoginHandler(tornado.web.RequestHandler):
             self.write("Cookie set.")
             self.finish()
   
-
+class NearbyLocationsHandler(tornado.web.RequestHandler):
+    
+    @tornado.web.asynchronous    
+    def get(self):
+        user_id = self.get_secure_cookie("user_id")
+        if not user_id:
+            # Should probably throw up an error here
+            pass
+        else:
+            lat = self.get_argument("lat")
+            lon = self.get_argument("lon")        
+            user = get_user(user_id)
+            
+            url = API["places"] % { "lat" : lat, 
+                                    "lon" : lon,
+                                    "distance" : 1000,
+                                    "access_token" : user["access_token"] }
+            
+            client = httpclient.AsyncHTTPClient()                        
+            client.fetch(url, self.on_fetch_places)
+            
+    def on_fetch_places(self, response):
+        places = json.loads(response.body)
+        print places
+        self.finish()
+        
     
 
 
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/login", LoginHandler),
-    (r"/callback", OnLoginHandler)
+    (r"/callback", OnLoginHandler),
+    (r"/nearby", NearbyLocationsHandler)
 ], cookie_secret=config.COOKIE_SECRET,
     debug=True)
 
