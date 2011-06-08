@@ -9,15 +9,15 @@
         <h2>Your current inventory</h2>
         <h3>Weapons</h3>
         <ul class="inventory-items">
-        {% for weapon, quantity in inventory["weapons"].items() %}
-            <li>{{ weapon }} : x{{ quantity }}</li>
+        {% for weapon_id, weapon in inventory["weapons"].items() %}
+            <li>{{ weapon["name"] }} : x{{ weapon["quantity"] }}</li>
         {% end %}
         </ul>
     
         <h3>Armor</h3>
         <ul class="inventory-item">
-        {% for armor, quantity in inventory["armor"].items() %}
-            <li>{{ armor }} : x{{ quantity }}</li>        
+        {% for armor_id, armor in inventory["armor"].items() %}
+            <li>{{ armor["name"] }} : x{{ armor["quantity"] }}</li>        
         {% end %}
         </ul>
     </div>

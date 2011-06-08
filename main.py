@@ -210,12 +210,23 @@ class StoreHandler(tornado.web.RequestHandler):
         # type and used a field to designate type.
         if action == "buy-weapon":
             # User already has item, increment quantity
+            weapon = items.weapons[item_id]
             if item_id in inventory["weapons"].keys():
-                inventory["weapons"][item_id] += 1
+                inventory["weapons"][item_id]["quantity"] += 1
             else:
-                inventory["weapons"][item_id] = 1
+                inventory["weapons"][item_id] = {
+                    "name" : weapon["name"],
+                    "quantity" : 1
+                }
         elif action == "buy-armor":
-            pass
+            armor = items.armor_list[item_id]
+            if item_id in inventory["armor"].keys():
+                inventory["armor"][item_id]["quantity"] += 1
+            else:
+                inventory["armor"][item_id] = {
+                    "name" : armor["name"],
+                    "quantity" : 1
+                }
         
         db.inventory.save(inventory, safe=True)
         self.redirect("/store")
