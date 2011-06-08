@@ -199,7 +199,26 @@ class StoreHandler(tornado.web.RequestHandler):
         """
             Allows a user to make purchases
         """
-        pass
+        user_id = self.get_secure_cookie("user_id")
+        user = get_user(user_id)        
+        inventory = self.get_inventory_for_user(user)
+        
+        action = self.get_argument("action")
+        item_id = self.get_argument("id")
+        
+        # Probably could have collapsed armor and weapons into a single
+        # type and used a field to designate type.
+        if action == "buy-weapon":
+            # User already has item, increment quantity
+            if item_id in inventory["weapons"].keys():
+                inventory["weapons"][item_id] += 1
+            else:
+                inventory["weapons"][item_id] = 1
+        elif action == "buy-armor":
+            pass
+        
+        db.inventory.save(inventory, safe=True)
+        self.redirect("/store")
         
     def get_inventory_for_user(self, user):
         """ 
@@ -211,7 +230,7 @@ class StoreHandler(tornado.web.RequestHandler):
         """
         inventory = db.inventory.find_one({ "_id" : user["id"] })
         if inventory is None:
-            inventory = { "weapons" : [], "armor" : [] }
+            inventory = { "_id" : user["id"], "weapons" : {}, "armor" : {} }
         return inventory
 
 application = tornado.web.Application([

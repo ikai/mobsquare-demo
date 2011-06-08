@@ -9,15 +9,15 @@
         <h2>Your current inventory</h2>
         <h3>Weapons</h3>
         <ul class="inventory-items">
-        {% for weapon in inventory["weapons"] %}
-            <li>{{ weapon["name"] }} : x{{ weapon["quantity"] }}</li>
+        {% for weapon, quantity in inventory["weapons"].items() %}
+            <li>{{ weapon }} : x{{ quantity }}</li>
         {% end %}
         </ul>
     
         <h3>Armor</h3>
         <ul class="inventory-item">
-        {% for armor in inventory["armor"] %}
-            <li>{{ armor["name"] }} : x{{ armor["quantity"] }}</li>        
+        {% for armor, quantity in inventory["armor"].items() %}
+            <li>{{ armor }} : x{{ quantity }}</li>        
         {% end %}
         </ul>
     </div>
@@ -35,7 +35,8 @@
                 <p><strong>Cost: </strong> ${{ weapon["cost" ]}}</p>
                 <p><strong>Damage bonus: </strong> +{{ weapon["damage_bonus" ]}}</p>
                 <p><strong>To Hit bonus: </strong> {{ weapon["to_hit_bonus" ]}}</p>
-                <input type="hidden" name="action" value="buy" />
+                <input type="hidden" name="id" value="{{ id }}" />                
+                <input type="hidden" name="action" value="buy-weapon" />
                 <input type="submit" value="Buy {{ weapon["name"] }}" />
             </form>
             {% end %}
@@ -53,7 +54,8 @@
                 <p><strong>Level Requirement: </strong> {{ armor["level_req" ]}}</p>
                 <p><strong>Cost: </strong> ${{ armor["cost" ]}}</p>
                 <p><strong>Armor bonus: </strong> +{{ armor["armor_bonus" ]}}</p>
-                <input type="hidden" name="action" value="buy" />
+                <input type="hidden" name="id" value="{{ id }}" />                                
+                <input type="hidden" name="action" value="buy-armor" />
                 <input type="submit" value="Buy {{ armor["name"] }}" />
             </form>
             {% end %}
