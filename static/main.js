@@ -55,8 +55,6 @@
     */
     main.loadNearbyLocations = function() {
         main.getLocation(function(lat, lon) {
-            console.log(lat)
-            console.log(lon);
             main.lat = lat;
             main.lon = lon;
             $.getJSON("/nearby?lat=" + lat + "&lon=" + lon, main.onLoadNearbyLocations)
@@ -67,7 +65,6 @@
         Callback for 
     */
     main.onLoadNearbyLocations = function(json) {
-        console.log(json);
         $.each(json.data, function(i, location) {
             $("#locations").append(tmpl("location_row_tmpl", 
                 {   "id"        : location["id"], 
