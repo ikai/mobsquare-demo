@@ -56,6 +56,12 @@ class MainHandler(tornado.web.RequestHandler):
         user_id = self.get_secure_cookie("user_id")
         user = get_user(user_id)                
         self.render("templates/main.html", user_id=user_id)
+
+class LogoutHandler(tornado.web.RequestHandler):
+    """ Handles logout requests """
+    def get(self):
+        self.clear_cookie("user_id")
+        self.render("templates/logout.html")
         
 class LoginHandler(tornado.web.RequestHandler):
     """ Redirects the user to the Facebook login URL to get authorization for our app """
@@ -114,8 +120,8 @@ class OnLoginHandler(tornado.web.RequestHandler):
             profile["access_token"] = access_token
             profile_id = db.profiles.insert(profile, safe=True)
             self.set_secure_cookie("user_id", str(profile_id))
-            self.redirect("/")
-            self.finish()
+            self.redirect("/") # implictly calls self.finish()
+
   
 class NearbyLocationsHandler(tornado.web.RequestHandler):
     """ 
@@ -270,6 +276,7 @@ class StoreHandler(tornado.web.RequestHandler):
 application = tornado.web.Application([
     (r"/", MainHandler),
     (r"/login", LoginHandler),
+    (r"/logout", LogoutHandler),
     (r"/callback", OnLoginHandler),
     (r"/nearby", NearbyLocationsHandler),
     (r"/location/([0-9]+)", LocationHandler),
