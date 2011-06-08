@@ -8,6 +8,9 @@
         <%= category %>
         <%= city %>, <%= country %>
     </p>
+    <% if (data != undefined) { %>
+        <p><strong>Owner:</strong> <%= data["owner"]["name"] %></p>
+    <% } %>
   </li>
 </script>    
 {% end %}

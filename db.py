@@ -25,6 +25,15 @@ def get_or_create_location_by_id(location_id):
         database.location.save(location_data, safe=True)
     return location_data
     
+def get_locations(location_ids):
+    """ 
+        Given a list of location IDs, return a dictionary of id, location pairs
+    """
+    locations = {}
+    for location in database.location.find({"_id" : { "$in" : location_ids }}):
+        locations[location["_id"]] = location
+    return locations
+    
 def save_profile(profile):
     """ Saves a dictionary to the profile collection """
     return database.profiles.save(profile, safe=True)

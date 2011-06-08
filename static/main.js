@@ -75,7 +75,9 @@
                     "name"      : location["name"],
                     "city"      : location["location"]["city"],
                     "country"   : location["location"]["country"], 
+                    "data"      : location["data"],                    
                     "category"  : location["category"] }));
+
         });
     }
     

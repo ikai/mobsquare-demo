@@ -142,7 +142,24 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
     def on_fetch_places(self, response):
         """ Callback invoked after places fetched """
         places = json.loads(response.body)
+        
+        location_ids = [location["id"] for location in places["data"]]
+        data = db.get_locations(location_ids)
+
         # Add additional metadata we've stored locally
+        for location in places["data"]:
+            if location["id"] in data.keys():
+                # micro JS template doesn't like conditionals
+                location["data"] = data[location["id"]]
+                # if loc_data["owner"] is not None:
+                #     location["owner_name"] = loc_data["owner"]["name"]
+                    
+                # json.dumps doesn't serialize datetime.datetime instances
+                # see http://twitter.com/#!/ikai/status/78364766720098304
+                if location["data"]["last_extort_time"] is not None:
+                    # We can fix this nonsense later
+                    location["data"]["last_extort_time"] = str(location["data"]["last_extort_time"])
+            
         self.write(json.dumps(places))
         self.finish()
         
@@ -223,7 +240,6 @@ class LocationHandler(tornado.web.RequestHandler):
             data=location_data, 
             current_user=user,
             inventory=inventory)    
-    
 
         
 class StoreHandler(tornado.web.RequestHandler):

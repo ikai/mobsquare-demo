@@ -23,7 +23,7 @@ Power: {{ location["checkins"] }}
     </form>
     {% else %}
     You currently control this location.
-        {% if (datetime.datetime.now() - data["last_extort_time"]).seconds > 3600 %} 
+        {% if data["last_extort_time"] is None or (datetime.datetime.now() - data["last_extort_time"]).seconds > 3600 %} 
         <form method="POST">
             <input type="hidden" name="action" value="extort">
             <input type="submit" value="Extort" />
