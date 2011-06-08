@@ -46,14 +46,14 @@ def require_facebook_login(f):
             self.finish()
         else:
             f(self, *args)
-    return new_f
-        
-    
+    return new_f    
 
 class MainHandler(tornado.web.RequestHandler):
     """ Renders the main page """
     @require_facebook_login
     def get(self):
+        user_id = self.get_secure_cookie("user_id")
+        user = get_user(user_id)                
         self.render("templates/main.html", user_id=user_id)
         
 class LoginHandler(tornado.web.RequestHandler):
@@ -100,7 +100,6 @@ class OnLoginHandler(tornado.web.RequestHandler):
             matches = ACCESS_TOKEN_REGEX.search(body)
             if matches:
                 access_token = matches.group(1)
-                print "Access token: %s" % access_token
                 client = httpclient.AsyncHTTPClient()                        
                 # lambda is effectively a function factory for us
                 client.fetch(API["profile"] % access_token, lambda response: self.on_profile_fetch(response, access_token))      
@@ -112,11 +111,9 @@ class OnLoginHandler(tornado.web.RequestHandler):
         else:
             profile = json.loads(response.body)
             profile["access_token"] = access_token
-            print "Writing profile: %s" % profile
             profile_id = db.profiles.insert(profile, safe=True)
-            print "Wrote profile with ID: %s" % profile_id
             self.set_secure_cookie("user_id", str(profile_id))
-            self.write("Cookie set.")
+            self.redirect("/")
             self.finish()
   
 class NearbyLocationsHandler(tornado.web.RequestHandler):
