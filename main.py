@@ -191,13 +191,18 @@ class StoreHandler(tornado.web.RequestHandler):
                 
         self.render("templates/store.html", 
             inventory=inventory,
+            mobsters=items.mobsters,
             weapons=items.weapons, 
             armor_list=items.armor_list)
         
     @require_facebook_login
     def post(self):
         """
-            Allows a user to make purchases
+            Allows a user to make purchases. In the case of armor or weapons, we
+            simply increment the number of items a user has. 
+            
+            In the case of mobsters, we append to the current list of mobsters in the
+            player's inventory because each mobster has its own state.
         """
         user_id = self.get_secure_cookie("user_id")
         user = get_user(user_id)        
@@ -227,7 +232,22 @@ class StoreHandler(tornado.web.RequestHandler):
                     "name" : armor["name"],
                     "quantity" : 1
                 }
-        
+        elif action == "recruit-mobster":
+            # We are recruiting someone to our gang. We persist this data
+            # differently because we have to store the state of each mobster.
+            mobster_prototype = items.mobsters[item_id]
+            
+            # We create a new instance of a mobster to track state
+            mobster_instance = {
+                "name" : mobster_prototype["name"],
+                "image_url" : mobster_prototype["image_url"],
+                "level" : mobster_prototype["level"],
+                "hp" : mobster_prototype["base_hitpoints"],                
+                # We may want to modify this later with bonuses
+                "damage" : mobster_prototype["base_damage"]
+            }
+            inventory["mobsters"].append(mobster_instance)
+            
         db.inventory.save(inventory, safe=True)
         self.redirect("/store")
         
@@ -241,7 +261,12 @@ class StoreHandler(tornado.web.RequestHandler):
         """
         inventory = db.inventory.find_one({ "_id" : user["id"] })
         if inventory is None:
-            inventory = { "_id" : user["id"], "weapons" : {}, "armor" : {} }
+            inventory = {   "_id" : user["id"], 
+                            "weapons" : {}, 
+                            "armor" : {}, 
+                            "mobsters" : [], 
+                            "money" : items.STARTING_MONEY 
+                        }
         return inventory
 
 application = tornado.web.Application([
