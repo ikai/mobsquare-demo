@@ -1,101 +1,95 @@
-<html>
-<head>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
-</head>
-<body>
-    <h1>Store</h1>
-    
-    <div id="inventory">
-        <h2>Your current inventory</h2>
-        <h3>Weapons</h3>
-        <ul class="inventory-items">
-        {% for weapon_id, weapon in inventory["weapons"].items() %}
-            <li>{{ weapon["name"] }} : x{{ weapon["quantity"] }}</li>
+{% block body %}
+<h1>Store</h1>
+
+<div id="inventory">
+    <h2>Your current inventory</h2>
+    <h3>Weapons</h3>
+    <ul class="inventory-items">
+    {% for weapon_id, weapon in inventory["weapons"].items() %}
+        <li>{{ weapon["name"] }} : x{{ weapon["quantity"] }}</li>
+    {% end %}
+    </ul>
+
+    <h3>Armor</h3>
+    <ul class="inventory-item">
+    {% for armor_id, armor in inventory["armor"].items() %}
+        <li>{{ armor["name"] }} : x{{ armor["quantity"] }}</li>        
+    {% end %}
+    </ul>
+</div>
+
+<div id="gang">
+    <h2>Your current gang</h2>
+    <ul class="inventory-mobsters">
+        {% for mobster in inventory["mobsters"] %}
+            <li class="mobster-instance">
+                <p><strong>Name:</strong> {{ mobster["name"]}}</p>
+                <p><strong>Level:</strong> {{ mobster["level"]}}</p>                                        
+                <p><strong>HP:</strong> {{ mobster["hp"]}}</p>  
+                <p><strong>Damage:</strong> {{ mobster["damage"]}}</p>                                           
+            </li>
         {% end %}
-        </ul>
+    </ul>
     
-        <h3>Armor</h3>
-        <ul class="inventory-item">
-        {% for armor_id, armor in inventory["armor"].items() %}
-            <li>{{ armor["name"] }} : x{{ armor["quantity"] }}</li>        
-        {% end %}
-        </ul>
-    </div>
-    
-    <div id="gang">
-        <h2>Your current gang</h2>
-        <ul class="inventory-mobsters">
-            {% for mobster in inventory["mobsters"] %}
-                <li class="mobster-instance">
-                    <p><strong>Name:</strong> {{ mobster["name"]}}</p>
-                    <p><strong>Level:</strong> {{ mobster["level"]}}</p>                                        
-                    <p><strong>HP:</strong> {{ mobster["hp"]}}</p>  
-                    <p><strong>Damage:</strong> {{ mobster["damage"]}}</p>                                           
-                </li>
-            {% end %}
-        </ul>
-        
-    </div>
+</div>
 
 
-    <div class="available-store-inventory">
-        <h2>Buy weapons</h2>
-        <ul id="weapons" class="purchase-item">
-            {% for id, weapon in weapons.items() %}
-            <form action="/store" method="POST">
-                <p>
-                    <h3 class="item-name">{{ weapon["name"] }}</h3>
-                </p>
-                <p><strong>Level Requirement: </strong> {{ weapon["level_req" ]}}</p>
-                <p><strong>Cost: </strong> ${{ weapon["cost" ]}}</p>
-                <p><strong>Damage bonus: </strong> +{{ weapon["damage_bonus" ]}}</p>
-                <p><strong>To Hit bonus: </strong> {{ weapon["to_hit_bonus" ]}}</p>
-                <input type="hidden" name="id" value="{{ id }}" />                
-                <input type="hidden" name="action" value="buy-weapon" />
-                <input type="submit" value="Buy {{ weapon["name"] }}" />
-            </form>
-            {% end %}
-        </ul>
-    </div>
-    
-    <div class="available-store-inventory">    
-        <h2>Buy armor</h3>
-        <ul id="armor" class="purchase-item">
-            {% for id, armor in armor_list.items() %}
-            <form action="/store" method="POST">
-                <p>
-                    <h3 class="item-name">{{ armor["name"] }}</h3>
-                </p>
-                <p><strong>Level Requirement: </strong> {{ armor["level_req" ]}}</p>
-                <p><strong>Cost: </strong> ${{ armor["cost" ]}}</p>
-                <p><strong>Armor bonus: </strong> +{{ armor["armor_bonus" ]}}</p>
-                <input type="hidden" name="id" value="{{ id }}" />                                
-                <input type="hidden" name="action" value="buy-armor" />
-                <input type="submit" value="Buy {{ armor["name"] }}" />
-            </form>
-            {% end %}
-        </ul>
-    </div>
-    
-    <div class="available-store-inventory">    
-        <h2>Recruit mobsters</h3>
-        <ul id="armor" class="purchase-item">
-            {% for id, mobster in mobsters.items() %}
-            <form action="/store" method="POST">
-                <p>
-                    <h3 class="item-name">{{ mobster["name"] }}</h3>
-                </p>
-                <p><strong>Level: </strong> {{ mobster["level" ]}}</p>
-                <p><strong>Cost: </strong> ${{ mobster["cost" ]}}</p>
-                <p><strong>Damage: </strong> ${{ mobster["base_damage" ]}}</p>
-                <p><strong>Starting hitpoints: </strong> ${{ mobster["base_hitpoints" ]}}</p>                
-                <input type="hidden" name="id" value="{{ id }}" />                                
-                <input type="hidden" name="action" value="recruit-mobster" />
-                <input type="submit" value="Recruit {{ mobster["name"] }}" />
-            </form>
-            {% end %}
-        </ul>
-    </div>
-    
-    
-</body>
+<div class="available-store-inventory">
+    <h2>Buy weapons</h2>
+    <ul id="weapons" class="purchase-item">
+        {% for id, weapon in weapons.items() %}
+        <form action="/store" method="POST">
+            <p>
+                <h3 class="item-name">{{ weapon["name"] }}</h3>
+            </p>
+            <p><strong>Level Requirement: </strong> {{ weapon["level_req" ]}}</p>
+            <p><strong>Cost: </strong> ${{ weapon["cost" ]}}</p>
+            <p><strong>Damage bonus: </strong> +{{ weapon["damage_bonus" ]}}</p>
+            <p><strong>To Hit bonus: </strong> {{ weapon["to_hit_bonus" ]}}</p>
+            <input type="hidden" name="id" value="{{ id }}" />                
+            <input type="hidden" name="action" value="buy-weapon" />
+            <input type="submit" value="Buy {{ weapon["name"] }}" />
+        </form>
+        {% end %}
+    </ul>
+</div>
+
+<div class="available-store-inventory">    
+    <h2>Buy armor</h3>
+    <ul id="armor" class="purchase-item">
+        {% for id, armor in armor_list.items() %}
+        <form action="/store" method="POST">
+            <p>
+                <h3 class="item-name">{{ armor["name"] }}</h3>
+            </p>
+            <p><strong>Level Requirement: </strong> {{ armor["level_req" ]}}</p>
+            <p><strong>Cost: </strong> ${{ armor["cost" ]}}</p>
+            <p><strong>Armor bonus: </strong> +{{ armor["armor_bonus" ]}}</p>
+            <input type="hidden" name="id" value="{{ id }}" />                                
+            <input type="hidden" name="action" value="buy-armor" />
+            <input type="submit" value="Buy {{ armor["name"] }}" />
+        </form>
+        {% end %}
+    </ul>
+</div>
+
+<div class="available-store-inventory">    
+    <h2>Recruit mobsters</h3>
+    <ul id="armor" class="purchase-item">
+        {% for id, mobster in mobsters.items() %}
+        <form action="/store" method="POST">
+            <p>
+                <h3 class="item-name">{{ mobster["name"] }}</h3>
+            </p>
+            <p><strong>Level: </strong> {{ mobster["level" ]}}</p>
+            <p><strong>Cost: </strong> ${{ mobster["cost" ]}}</p>
+            <p><strong>Damage: </strong> ${{ mobster["base_damage" ]}}</p>
+            <p><strong>Starting hitpoints: </strong> ${{ mobster["base_hitpoints" ]}}</p>                
+            <input type="hidden" name="id" value="{{ id }}" />                                
+            <input type="hidden" name="action" value="recruit-mobster" />
+            <input type="submit" value="Recruit {{ mobster["name"] }}" />
+        </form>
+        {% end %}
+    </ul>
+</div>
+{% end %}

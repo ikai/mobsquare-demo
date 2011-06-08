@@ -1,23 +1,22 @@
-<html>
-<head>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
-    <script type="text/javascript" src="/static/main.js"></script>    
-    <script type="text/html" id="location_row_tmpl">
-      <li id="location-<%= id %>" class="<%= (i % 2 == 1 ? " even" : "") %>">
-        <p>
-            <strong><a href="/location/<%= id %>"><%= name %></a>:</strong>
-            <%= category %>
-            <%= city %>, <%= country %>
-        </p>
-      </li>
-    </script>    
-</head>
-<body>
-    <h1>Welcome to MobSquare!</h1>
+{% extends "base.html" %}
+{% block header %}
+<script type="text/javascript" src="/static/main.js"></script>    
+<script type="text/html" id="location_row_tmpl">
+  <li id="location-<%= id %>" class="<%= (i % 2 == 1 ? " even" : "") %>">
+    <p>
+        <strong><a href="/location/<%= id %>"><%= name %></a>:</strong>
+        <%= category %>
+        <%= city %>, <%= country %>
+    </p>
+  </li>
+</script>    
+{% end %}
+{% block body %}
+<h1>Welcome to MobSquare!</h1>
 
-    User ID: {{ user_id }}
-    
-    <a href="#" id="loader">Click me to load nearby locations</a>
-    <ul id="locations">
-    </ul>
-</body>
+User ID: {{ user_id }}
+
+<a href="#" id="loader">Click me to load nearby locations</a>
+<ul id="locations">
+</ul>
+{% end %}

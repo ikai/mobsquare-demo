@@ -26,6 +26,7 @@ API = {
     "places"    : "https://graph.facebook.com/search?type=place&center=%(lat)s,%(lon)s&distance=%(distance)d&access_token=%(access_token)s"
 }
 
+# Instantiate a global connection to MongoDB
 connection = pymongo.Connection()
 db = connection.mobsq_db
 
