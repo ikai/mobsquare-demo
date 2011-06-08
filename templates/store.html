@@ -4,7 +4,60 @@
 </head>
 <body>
     <h1>Store</h1>
+    
+    <div id="inventory">
+        <h2>Your current inventory</h2>
+        <h3>Weapons</h3>
+        <ul class="inventory-items">
+        {% for weapon in inventory["weapons"] %}
+            <li>{{ weapon["name"] }} : x{{ weapon["quantity"] }}</li>
+        {% end %}
+        </ul>
+    
+        <h3>Armor</h3>
+        <ul class="inventory-item">
+        {% for armor in inventory["armor"] %}
+            <li>{{ armor["name"] }} : x{{ armor["quantity"] }}</li>        
+        {% end %}
+        </ul>
+    </div>
 
-    <ul id="locations">
-    </ul>
+
+    <div class="available-store-inventory">
+        <h2>Buy weapons</h2>
+        <ul id="weapons" class="purchase-item">
+            {% for id, weapon in weapons.items() %}
+            <form action="/store" method="POST">
+                <p>
+                    <h3 class="item-name">{{ weapon["name"] }}</h3>
+                </p>
+                <p><strong>Level Requirement: </strong> {{ weapon["level_req" ]}}</p>
+                <p><strong>Cost: </strong> ${{ weapon["cost" ]}}</p>
+                <p><strong>Damage bonus: </strong> +{{ weapon["damage_bonus" ]}}</p>
+                <p><strong>To Hit bonus: </strong> {{ weapon["to_hit_bonus" ]}}</p>
+                <input type="hidden" name="action" value="buy" />
+                <input type="submit" value="Buy {{ weapon["name"] }}" />
+            </form>
+            {% end %}
+        </ul>
+    </div>
+    
+    <div class="available-store-inventory">    
+        <h2>Buy armor</h3>
+        <ul id="armor" class="purchase-item">
+            {% for id, armor in armor_list.items() %}
+            <form action="/store" method="POST">
+                <p>
+                    <h3 class="item-name">{{ armor["name"] }}</h3>
+                </p>
+                <p><strong>Level Requirement: </strong> {{ armor["level_req" ]}}</p>
+                <p><strong>Cost: </strong> ${{ armor["cost" ]}}</p>
+                <p><strong>Armor bonus: </strong> +{{ armor["armor_bonus" ]}}</p>
+                <input type="hidden" name="action" value="buy" />
+                <input type="submit" value="Buy {{ armor["name"] }}" />
+            </form>
+            {% end %}
+        </ul>
+    </div>
+    
 </body>

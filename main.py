@@ -185,14 +185,34 @@ class StoreHandler(tornado.web.RequestHandler):
             Fetches the purchasable items from the datastore and renders
             them to the user via HTML.
         """
-        self.render("templates/store.html", weapons=items.weapons, armor=items.armor)
+        user_id = self.get_secure_cookie("user_id")
+        user = get_user(user_id)        
+        inventory = self.get_inventory_for_user(user)
+                
+        self.render("templates/store.html", 
+            inventory=inventory,
+            weapons=items.weapons, 
+            armor_list=items.armor_list)
         
+    @require_facebook_login
     def post(self):
         """
             Allows a user to make purchases
         """
         pass
-
+        
+    def get_inventory_for_user(self, user):
+        """ 
+            Fetches the inventory for user. Keys off the user's Facebook ID.
+            
+            Key the inventory for a given User off their Facebook ID, not their
+            MongoDB ID because of the unfortunate choice we made of tying a session
+            to a User object. 
+        """
+        inventory = db.inventory.find_one({ "_id" : user["id"] })
+        if inventory is None:
+            inventory = { "weapons" : [], "armor" : [] }
+        return inventory
 
 application = tornado.web.Application([
     (r"/", MainHandler),
