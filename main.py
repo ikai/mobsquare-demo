@@ -6,11 +6,10 @@ import urllib
 import re
 import json
 import os
-
-import pymongo
-import bson
+import datetime
 
 import config
+import db
 import items
 
 CALLBACK_URL = urllib.quote(config.REDIRECT_URL + "/callback")
@@ -26,14 +25,6 @@ API = {
     "places"    : "https://graph.facebook.com/search?type=place&center=%(lat)s,%(lon)s&distance=%(distance)d&access_token=%(access_token)s"
 }
 
-# Instantiate a global connection to MongoDB
-connection = pymongo.Connection()
-db = connection.mobsq_db
-
-def get_user(user_id):
-    """ Helper method for fetching the user from a user_id """
-    return db.profiles.find_one({"_id" : bson.objectid.ObjectId(user_id)})
-    
 def require_facebook_login(f):
     """ 
         This decorator forces a handler to require a Facebook login by checking 
@@ -54,7 +45,7 @@ class MainHandler(tornado.web.RequestHandler):
     @require_facebook_login
     def get(self):
         user_id = self.get_secure_cookie("user_id")
-        user = get_user(user_id)                
+        user = db.get_user(user_id)                
         self.render("templates/main.html", user_id=user_id)
 
 class LogoutHandler(tornado.web.RequestHandler):
@@ -118,7 +109,7 @@ class OnLoginHandler(tornado.web.RequestHandler):
         else:
             profile = json.loads(response.body)
             profile["access_token"] = access_token
-            profile_id = db.profiles.insert(profile, safe=True)
+            profile_id = db.save_profile(profile)
             self.set_secure_cookie("user_id", str(profile_id))
             self.redirect("/") # implictly calls self.finish()
 
@@ -138,7 +129,7 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
         user_id = self.get_secure_cookie("user_id")
         lat = self.get_argument("lat")
         lon = self.get_argument("lon")        
-        user = get_user(user_id)
+        user = db.get_user(user_id)
         
         url = API["places"] % { "lat" : lat, 
                                 "lon" : lon,
@@ -169,15 +160,71 @@ class LocationHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     @require_facebook_login
     def get(self, location_id):
+        """ Fetches location data """
         url = API["base"] % location_id
         client = httpclient.AsyncHTTPClient()
         client.fetch(url, self.on_fetch_location)
+    
+    @require_facebook_login
+    def post(self, location_id):
+        """
+            This handler is a bit more complex - handles the actions that can 
+            be taken at this location. For instance:
+            
+            - extort
+            - take control
+            - leave guards
+            - battle
+        """
+        user_id = self.get_secure_cookie("user_id")
+        user = db.get_user(user_id)    
+                    
+        location = db.get_or_create_location_by_id(location_id)        
+        action = self.get_argument("action")
+
+        if action == "take-control":
+            # TODO: Do an additional check to make sure this isn't owned
+            # by someone else and there are no guards here.
+            location["owner"] = { "name" : user["name"], "user_id" : user["id"] }
+            db.save_location(location)            
+        elif action == "extort" and location["owner"]["user_id"] == user["id"]:
+            inventory = db.get_inventory_for_user(user)            
+            extortion_value = 5 * location["checkins"]
+            inventory["money"] += extortion_value
+            db.save_inventory(inventory)
+            
+            location["last_extort_time"] = datetime.datetime.now()            
+            db.save_location(location)
+            
+        self.redirect("/location/%s" % location_id)
             
     def on_fetch_location(self, response):
-        """ Callback invoked when we get location data """
+        """ 
+            Callback invoked when we get location data. Lazily check to see if
+            we already have an entry in MongoDB about this location or not. If
+            not, create one.
+        """
+        user_id = self.get_secure_cookie("user_id")
+        user = db.get_user(user_id)    
+        
         location = json.loads(response.body)
-        self.render("templates/location.html", location=location)        
-        self.finish()
+        location_data = db.get_or_create_location_by_id(location["id"])
+        
+        # Lazy get this
+        location_data["checkins"] = location["checkins"]
+        db.save_location(location_data)
+        
+        inventory = db.get_inventory_for_user(user)
+        
+        # power is a function of checkins * something
+        self.render("templates/location.html", 
+            datetime=datetime,
+            location=location, 
+            data=location_data, 
+            current_user=user,
+            inventory=inventory)    
+    
+
         
 class StoreHandler(tornado.web.RequestHandler):
     """
@@ -190,7 +237,7 @@ class StoreHandler(tornado.web.RequestHandler):
             them to the user via HTML.
         """
         user_id = self.get_secure_cookie("user_id")
-        user = get_user(user_id)        
+        user = db.get_user(user_id)        
         inventory = self.get_inventory_for_user(user)
                 
         self.render("templates/store.html", 
@@ -209,7 +256,7 @@ class StoreHandler(tornado.web.RequestHandler):
             player's inventory because each mobster has its own state.
         """
         user_id = self.get_secure_cookie("user_id")
-        user = get_user(user_id)        
+        user = db.get_user(user_id)        
         inventory = self.get_inventory_for_user(user)
         
         action = self.get_argument("action")
@@ -252,26 +299,9 @@ class StoreHandler(tornado.web.RequestHandler):
             }
             inventory["mobsters"].append(mobster_instance)
             
-        db.inventory.save(inventory, safe=True)
+        db.save_inventory(inventory)
         self.redirect("/store")
         
-    def get_inventory_for_user(self, user):
-        """ 
-            Fetches the inventory for user. Keys off the user's Facebook ID.
-            
-            Key the inventory for a given User off their Facebook ID, not their
-            MongoDB ID because of the unfortunate choice we made of tying a session
-            to a User object. 
-        """
-        inventory = db.inventory.find_one({ "_id" : user["id"] })
-        if inventory is None:
-            inventory = {   "_id" : user["id"], 
-                            "weapons" : {}, 
-                            "armor" : {}, 
-                            "mobsters" : [], 
-                            "money" : items.STARTING_MONEY 
-                        }
-        return inventory
 
 application = tornado.web.Application([
     (r"/", MainHandler),

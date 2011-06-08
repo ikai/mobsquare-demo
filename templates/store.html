@@ -4,6 +4,7 @@
 
 <div id="inventory">
     <h2>Your current inventory</h2>
+    <p><strong>Current money:</strong> ${{ inventory["money"] }}</p>
     <h3>Weapons</h3>
     <ul class="inventory-items">
     {% for weapon_id, weapon in inventory["weapons"].items() %}

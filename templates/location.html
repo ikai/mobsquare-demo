@@ -6,6 +6,36 @@ City: {{ location["location"]["city"] }}
 Country: {{ location["location"]["country"] }}
 Power: {{ location["checkins"] }}
 
+<div id="status">
+    <p><strong>Current money:</strong> ${{ inventory["money"] }}</p>
+</div>
+
+<div id="location-info">
+    <p><strong>Extortion value:</strong> ${{ data["checkins"] * 5 }}</p>    
+    <p><strong>Last extortion:</strong> {{ data["last_extort_time"] }}</p>        
+</div>
+
+<div id="location-actions">
+    {% if data["owner"] is None %}
+    <form method="POST">
+        <input type="hidden" name="action" value="take-control">
+        <input type="submit" value="Take control" />
+    </form>
+    {% else %}
+    You currently control this location.
+        {% if (datetime.datetime.now() - data["last_extort_time"]).seconds > 3600 %} 
+        <form method="POST">
+            <input type="hidden" name="action" value="extort">
+            <input type="submit" value="Extort" />
+        </form>
+        {% else %}
+        You have to wait {{ (3600 - (datetime.datetime.now() - data["last_extort_time"]).seconds) / 60 }} 
+        minutes before extorting this location again.
+        {% end %}
+    
+    {% end %}
+</div>
+    
 <p>
     This is where you would show check-in information, power, etc
 </p>
