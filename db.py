@@ -12,9 +12,9 @@ def get_user(user_id):
 def get_or_create_location_by_id(location_id):
     """
         Attempts to fetch location data from database. If it doesn't exist,
-        create it.
+        create it. Note that this is NOT concurency safe.
     """    
-    location_data = database.location.find_one({ "_id" : location_id})
+    location_data = database.location.find_one({ "_id" : location_id })
     if location_data is None:
         location_data = {   "_id" : location_id, 
                             "guards": [], 

@@ -12,6 +12,7 @@ import config
 import db
 import items
 
+# TODO: Change to use urllib.urlencode()
 CALLBACK_URL = urllib.quote(config.REDIRECT_URL + "/callback")
 LOGIN_URL = "https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&scope=email,user_checkins,publish_checkins,manage_friendlists" % (config.FACEBOOK_APPLICATION_ID, CALLBACK_URL)
 ACCESS_TOKEN_URL_TPL = "https://graph.facebook.com/oauth/access_token?client_id=" + config.FACEBOOK_APPLICATION_ID \
@@ -254,7 +255,7 @@ class StoreHandler(tornado.web.RequestHandler):
         """
         user_id = self.get_secure_cookie("user_id")
         user = db.get_user(user_id)        
-        inventory = self.get_inventory_for_user(user)
+        inventory = db.get_inventory_for_user(user)
                 
         self.render("templates/store.html", 
             inventory=inventory,
