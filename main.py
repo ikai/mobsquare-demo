@@ -46,7 +46,7 @@ class MainHandler(tornado.web.RequestHandler):
     @require_facebook_login
     def get(self):
         user_id = self.get_secure_cookie("user_id")
-        user = db.get_user(user_id)                
+        user = db.get_user(user_id)
         self.render("templates/main.html", user_id=user_id)
 
 class LogoutHandler(tornado.web.RequestHandler):
@@ -82,12 +82,12 @@ class OnLoginHandler(tornado.web.RequestHandler):
         be persisted somewhere.
     """
     
-    @tornado.web.asynchronous    
+    @tornado.web.asynchronous
     def get(self):
         # Store this somewhere
         code = self.get_argument("code")
         access_token_url = ACCESS_TOKEN_URL_TPL + code
-        client = httpclient.AsyncHTTPClient()                        
+        client = httpclient.AsyncHTTPClient()
         client.fetch(access_token_url, self.on_fetched_token)
         
     def on_fetched_token(self, response):
@@ -99,13 +99,13 @@ class OnLoginHandler(tornado.web.RequestHandler):
             matches = ACCESS_TOKEN_REGEX.search(body)
             if matches:
                 access_token = matches.group(1)
-                client = httpclient.AsyncHTTPClient()                        
+                client = httpclient.AsyncHTTPClient()
                 # lambda is effectively a function factory for us
                 client.fetch(API["profile"] % access_token, lambda response: self.on_profile_fetch(response, access_token))      
                 
     def on_profile_fetch(self, response, access_token):
         """ Callback invoked when we have fetched the user's profile """
-        if response.error:        
+        if response.error:
             print "Error:", response.error
         else:
             profile = json.loads(response.body)
@@ -124,12 +124,12 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
         associated with each of the places returned.
     """
     
-    @tornado.web.asynchronous    
+    @tornado.web.asynchronous
     @require_facebook_login
     def get(self):
         user_id = self.get_secure_cookie("user_id")
         lat = self.get_argument("lat")
-        lon = self.get_argument("lon")        
+        lon = self.get_argument("lon")
         user = db.get_user(user_id)
         
         url = API["places"] % { "lat" : lat, 
@@ -137,7 +137,7 @@ class NearbyLocationsHandler(tornado.web.RequestHandler):
                                 "distance" : 1000,
                                 "access_token" : user["access_token"] }
         
-        client = httpclient.AsyncHTTPClient()                        
+        client = httpclient.AsyncHTTPClient()
         client.fetch(url, self.on_fetch_places)
             
     def on_fetch_places(self, response):
@@ -195,23 +195,23 @@ class LocationHandler(tornado.web.RequestHandler):
             - battle
         """
         user_id = self.get_secure_cookie("user_id")
-        user = db.get_user(user_id)    
+        user = db.get_user(user_id)
                     
-        location = db.get_or_create_location_by_id(location_id)        
+        location = db.get_or_create_location_by_id(location_id)
         action = self.get_argument("action")
 
         if action == "take-control":
             # TODO: Do an additional check to make sure this isn't owned
             # by someone else and there are no guards here.
             location["owner"] = { "name" : user["name"], "user_id" : user["id"] }
-            db.save_location(location)            
+            db.save_location(location)
         elif action == "extort" and location["owner"]["user_id"] == user["id"]:
-            inventory = db.get_inventory_for_user(user)            
+            inventory = db.get_inventory_for_user(user)
             extortion_value = 5 * location["checkins"]
             inventory["money"] += extortion_value
             db.save_inventory(inventory)
             
-            location["last_extort_time"] = datetime.datetime.now()            
+            location["last_extort_time"] = datetime.datetime.now()
             db.save_location(location)
             
         self.redirect("/location/%s" % location_id)
@@ -223,7 +223,7 @@ class LocationHandler(tornado.web.RequestHandler):
             not, create one.
         """
         user_id = self.get_secure_cookie("user_id")
-        user = db.get_user(user_id)    
+        user = db.get_user(user_id)
         
         location = json.loads(response.body)
         location_data = db.get_or_create_location_by_id(location["id"])
@@ -235,7 +235,7 @@ class LocationHandler(tornado.web.RequestHandler):
         inventory = db.get_inventory_for_user(user)
         
         # power is a function of checkins * something
-        self.render("templates/location.html", 
+        self.render("templates/location.html",
             datetime=datetime,
             location=location, 
             data=location_data, 
@@ -254,26 +254,26 @@ class StoreHandler(tornado.web.RequestHandler):
             them to the user via HTML.
         """
         user_id = self.get_secure_cookie("user_id")
-        user = db.get_user(user_id)        
+        user = db.get_user(user_id)
         inventory = db.get_inventory_for_user(user)
                 
-        self.render("templates/store.html", 
+        self.render("templates/store.html",
             inventory=inventory,
             mobsters=items.mobsters,
-            weapons=items.weapons, 
+            weapons=items.weapons,
             armor_list=items.armor_list)
         
     @require_facebook_login
     def post(self):
         """
             Allows a user to make purchases. In the case of armor or weapons, we
-            simply increment the number of items a user has. 
+            simply increment the number of items a user has.
             
             In the case of mobsters, we append to the current list of mobsters in the
             player's inventory because each mobster has its own state.
         """
         user_id = self.get_secure_cookie("user_id")
-        user = db.get_user(user_id)        
+        user = db.get_user(user_id)
         inventory = self.get_inventory_for_user(user)
         
         action = self.get_argument("action")
@@ -310,7 +310,7 @@ class StoreHandler(tornado.web.RequestHandler):
                 "name" : mobster_prototype["name"],
                 "image_url" : mobster_prototype["image_url"],
                 "level" : mobster_prototype["level"],
-                "hp" : mobster_prototype["base_hitpoints"],                
+                "hp" : mobster_prototype["base_hitpoints"],
                 # We may want to modify this later with bonuses
                 "damage" : mobster_prototype["base_damage"]
             }
